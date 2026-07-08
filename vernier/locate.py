@@ -76,30 +76,23 @@ def _largest_run(mask, **kw):
     return max(runs, key=lambda r: r[1] - r[0]) if runs else None
 
 
-def _tick_strength(profile, min_lag=4, max_lag=45):
-    """How strongly a 1-D profile is periodic at a tick-like pitch = peak of its
-    normalised autocorrelation. Maximised when ticks line up (correct deskew)."""
-    x = profile - profile.mean()
-    n = float(np.dot(x, x))
-    if n < 1e-9:
-        return 0.0
-    best = 0.0
-    for lag in range(min_lag, min(max_lag, len(x))):
-        best = max(best, float(np.dot(x[:-lag], x[lag:])) / n)
-    return best
-
-
-def estimate_skew(gray, cols, rows=None, angle_range=(-12.0, 12.0), step=0.25):
-    """Deskew angle that sharpens the ticks in the given band. Scored by the
-    variance of the band's column-mean profile: when the (full-height) ticks are
-    horizontal their dips align across all rows, deepening the profile."""
+def residual_skew(gray, cols, rows, angle_range=(-6.0, 6.0), step=0.2):
+    """Residual tilt (deg) of the ticks in a band, by rotating a *crop* of the
+    band about its centre and maximising the row-mean profile's variance (ticks
+    horizontal -> deepest aligned dips). Estimated on the already-mostly-deskewed
+    frame, so the search stays near 0 and column shear is negligible."""
+    r0, r1 = rows
     c0, c1 = cols
-    r0, r1 = rows if rows is not None else (0, gray.shape[0])
+    crop = gray[r0:r1, c0:c1]
+    if crop.shape[1] < 6 or crop.shape[0] < 20:
+        return 0.0
+    m = int((c1 - c0) * 0.6) + 2
     angles = np.arange(angle_range[0], angle_range[1] + 1e-9, step)
 
     def score(ang):
-        d = rotate(gray, ang, resize=False, mode="edge")
-        return float(d[r0:r1, c0:c1].mean(axis=1).var())
+        d = rotate(crop, ang, resize=False, mode="edge")
+        prof = d[m:-m].mean(axis=1) if d.shape[0] > 2 * m else d.mean(axis=1)
+        return float(prof.var())
 
     return float(max(angles, key=score))
 
@@ -163,13 +156,23 @@ def locate_scale(gray, roi=None, score_thresh=0.30, main_frac=0.6, verbose=False
     """
     R, C = gray.shape
     roi = roi if roi is not None else (0, R, 0, C)
+    r0, r1, c0, c1 = roi
 
-    # pass 1: rough bands with no deskew -> locate the main band
-    main_run, _, _, _, _ = _detect_bands(gray, roi, score_thresh, main_frac)
-    # pass 2: skew from the main band (full-height ticks = cleanest signal)
-    angle = estimate_skew(gray, main_run, rows=(roi[0], roi[1]))
-    # pass 3: final bands on the deskewed image
-    d = rotate(gray, angle, resize=False, mode="edge")
+    # Iterate: detect bands in the current (partly deskewed) frame, measure the
+    # residual tilt of the main band, accumulate, repeat. Converges from any
+    # starting tilt -- after the first correction the residual (and the column
+    # shear it induces) is small, so band columns stay valid.
+    angle = 0.0
+    for _ in range(4):
+        d = rotate(gray, angle, resize=False, mode="edge") if angle else gray
+        main_run, vern_run, cstart, cend, pitches = _detect_bands(d, roi, score_thresh, main_frac)
+        resid = residual_skew(d, main_run, (r0, r1))
+        angle += resid
+        if abs(resid) < 0.1:
+            break
+
+    # final detection in the converged frame
+    d = rotate(gray, angle, resize=False, mode="edge") if angle else gray
     main_run, vern_run, cstart, cend, pitches = _detect_bands(d, roi, score_thresh, main_frac)
 
     mc = np.arange(*main_run)

@@ -12,7 +12,14 @@ sys.path.insert(0, str(ROOT))
 from vernier.pipeline import read_fixture  # noqa: E402
 
 GROUND_TRUTH = json.loads((ROOT / "fixtures" / "ground_truth.json").read_text())
-CASES = [(k, mode) for k in sorted(GROUND_TRUTH) for mode in ("manual", "auto")]
+CROPS = json.loads((ROOT / "fixtures" / "crops.json").read_text())
+
+# every fixture reads via auto; those with hand-tuned bands also read via manual
+CASES = []
+for k in sorted(GROUND_TRUTH):
+    CASES.append((k, "auto"))
+    if "main_cols" in CROPS.get(k, {}):
+        CASES.append((k, "manual"))
 
 
 @pytest.mark.parametrize("key,mode", CASES)

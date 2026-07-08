@@ -13,5 +13,10 @@
     "value_mm": 63.8,
     "tolerance_mm": 0.1,
     "notes": "Hand-read by user 2026-07-08. Low-res wide shot (640x480, EXIF-rotated); processed at upscale=3. Vernier 0 sits at ~63.8 mm (between the 60 mm and 70 mm numbered marks)."
+  },
+  "image4": {
+    "value_mm": 63.6,
+    "tolerance_mm": 0.1,
+    "notes": "Hand-read by user 2026-07-08. Low-res wide shot (640x480, EXIF-rotated); processed at upscale=3, auto-located only. Vernier 0 sits at ~63.6 mm."
   }
 }

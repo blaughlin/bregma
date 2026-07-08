@@ -48,5 +48,14 @@
     "mm_per_div": 1.0,
     "anchor": {"value_mm": 63.0},
     "roi": [540, 1740, 490, 690]
+  },
+  "image4": {
+    "path": "SampleImages/image4.jpeg",
+    "upscale": 3,
+    "auto": true,
+    "roi": [450, 1500, 470, 740],
+    "vernier_ref": "bottom",
+    "mm_per_div": 1.0,
+    "anchor": {"value_mm": 63.0}
   }
 }
