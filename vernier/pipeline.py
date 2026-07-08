@@ -8,18 +8,37 @@ from pathlib import Path
 
 import numpy as np
 
-from vernier import imaging, profile, ticks, read
+from vernier import imaging, profile, ticks, read, locate
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def read_fixture(key, root=ROOT, verbose=False):
-    """Run steps 1-5 on a named fixture. Returns (result, intermediates)."""
+def read_fixture(key, root=ROOT, verbose=False, auto=None):
+    """Run steps 1-5 on a named fixture. Returns (result, intermediates).
+
+    When the fixture (or `auto=True`) requests it, the deskew angle and the
+    main/vernier band columns and rows are detected automatically from a loose
+    ROI instead of being hand-specified.
+    """
     cfg = json.loads((root / "fixtures" / "crops.json").read_text())[key]
 
     gray = imaging.load_gray(root / cfg["path"],
                              downscale=cfg.get("downscale", 1),
                              upscale=cfg.get("upscale", 1))
+
+    use_auto = cfg.get("auto", False) if auto is None else auto
+    if use_auto:
+        loc = locate.locate_scale(gray, roi=tuple(cfg["roi"]))
+        # detection spacing follows the detected pitch (below the true pitch)
+        loc["main_min_dist"] = max(3, int(0.55 * loc["main_pitch"]))
+        loc["vernier_min_dist"] = max(3, int(0.55 * loc["vernier_pitch"]))
+        cfg = {**cfg, **loc}          # detected geometry overrides hand values
+        if verbose:
+            print(f"[{key}] auto-located: deskew={loc['deskew_deg']:.2f} "
+                  f"main_cols={loc['main_cols']} vernier_cols={loc['vernier_cols']} "
+                  f"vernier_rows={loc['vernier_rows']} "
+                  f"min_dist m/v={loc['main_min_dist']}/{loc['vernier_min_dist']}")
+
     angle = cfg["deskew_deg"]
     if angle is None:
         angle = imaging.estimate_skew(gray, rows=tuple(cfg["rows"]))

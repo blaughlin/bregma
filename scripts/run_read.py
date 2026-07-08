@@ -1,6 +1,7 @@
 """Run the full pipeline on a fixture: print the reading, dump debug PNGs.
 
-Usage:  python scripts/run_read.py [image3 ...]
+Usage:  python scripts/run_read.py [--auto] [image3 ...]
+  --auto  detect deskew + bands from the loose ROI instead of hand-tuned crops.
 """
 import sys
 from pathlib import Path
@@ -12,12 +13,13 @@ from vernier import debug           # noqa: E402
 from vernier.pipeline import read_fixture, ROOT as PKG_ROOT  # noqa: E402
 
 
-def run(key, save_debug=True):
-    result, im = read_fixture(key, verbose=True)
+def run(key, save_debug=True, auto=None):
+    result, im = read_fixture(key, verbose=True, auto=auto)
     if save_debug:
         out_dir = PKG_ROOT / "debug"
         out_dir.mkdir(exist_ok=True)
-        out = out_dir / f"{key}.png"
+        suffix = "_auto" if auto else ""
+        out = out_dir / f"{key}{suffix}.png"
         debug.render(out, im["gray"], im["main_rows"], im["vern_rows"],
                      im["main_cols"], im["vern_cols"],
                      im["main_prof"], im["main_ticks"],
@@ -28,5 +30,8 @@ def run(key, save_debug=True):
 
 
 if __name__ == "__main__":
-    for k in (sys.argv[1:] or ["image3"]):
-        run(k)
+    args = sys.argv[1:]
+    auto = "--auto" in args
+    keys = [a for a in args if not a.startswith("--")] or ["image3"]
+    for k in keys:
+        run(k, auto=auto)

@@ -9,17 +9,32 @@ the full design and the two-stage plan.
 
 ## Status
 Vertical scale (Kopf 957), three hand-read positions across three very different captures,
-all inside the 0.1 mm (one-vernier-division) gate:
+all inside the 0.1 mm (one-vernier-division) gate. Two read paths are validated: **manual**
+(hand-tuned crop) and **auto** (deskew + bands detected from just a loose ROI).
 
-| fixture | reads | hand-read | error | notes |
-|---------|-------|-----------|-------|-------|
-| `image3` | 40.421 mm | 40.4 mm | 0.021 mm | native resolution, fit RMS 0.53 px |
-| `image2` | 16.077 mm | 16.1 mm | 0.023 mm | 3024x4032 + perforated background, `downscale=3`, fit RMS 0.15 px |
-| `image1` | 63.759 mm | 63.8 mm | 0.041 mm | 640x480 low-res wide shot (EXIF-rotated), `upscale=3`, fit RMS 0.46 px |
+| fixture | hand-read | manual | auto | notes |
+|---------|-----------|--------|------|-------|
+| `image3` | 40.4 mm | 40.421 mm | 40.333 mm | native resolution |
+| `image2` | 16.1 mm | 16.077 mm | 16.110 mm | 3024x4032 + perforated background, `downscale=3` |
+| `image1` | 63.8 mm | 63.759 mm | 63.856 mm | 640x480 low-res wide shot (EXIF-rotated), `upscale=3` |
+
+## Front-end: auto-location (`locate.py`)
+Given a **loose ROI** around the scale (what the app's framing quality-gate will provide), the
+front-end replaces the hand-tuned crop:
+- Scores every column by how *periodic* its vertical profile is (autocorrelation peak) - tick
+  columns light up; smooth metal, printed numbers, and background do not.
+- Estimates deskew from the tick columns; confining the search to the ROI keeps periodic
+  backgrounds (image2's perforated panel, image1's carpet) from fooling it.
+- Separates the **main** band (ticks span the full height) from the **vernier** band (ticks
+  only in the cursor sub-region) by per-column *row coverage*, since the two bands abut and
+  can't be split by a column gap. Yields the vernier row range and tick pitch too.
+
+Run it with `--auto`; the read then needs only the ROI, scale factor, `mm_per_div`, vernier
+reference end, and the coarse integer anchor.
 
 ## How it works (steps 1-5, per CLAUDE.md)
-1. **`imaging.py`** - load (optional downscale), deskew (small rotation that maximises
-   tick-profile contrast), and slice the main-scale and vernier tick columns into bands.
+1. **`imaging.py`** - load (optional up/downscale, EXIF-aware), deskew, and slice the
+   main-scale and vernier tick columns into bands.
 2. **`profile.py`** - collapse each band across its width to a 1-D intensity profile
    (dark ticks = dips); glare is masked and interpolated.
 3. **`ticks.py`** - detect dips (`scipy.signal.find_peaks`) and refine each to sub-pixel with
@@ -43,21 +58,22 @@ python -m venv .venv
 
 ## Run
 ```bash
-.venv/Scripts/python scripts/run_read.py image3 image2   # prints readings, writes debug PNGs
-.venv/Scripts/python -m pytest tests/                    # validate against ground truth
+.venv/Scripts/python scripts/run_read.py image3 image2 image1   # manual crop
+.venv/Scripts/python scripts/run_read.py --auto image3 image2 image1   # auto-locate from ROI
+.venv/Scripts/python -m pytest tests/                    # validate both paths vs ground truth
 ```
 
 ## Fixtures
 - `SampleImages/` - source photos.
-- `fixtures/crops.json` - per-image downscale, deskew angle, band columns/rows, detection
-  params, and the numbered-mark anchor.
+- `fixtures/crops.json` - per-image scale factor, loose `roi`, the coarse anchor value, plus
+  the hand-tuned deskew/bands used by the manual path (the auto path overrides these).
 - `fixtures/ground_truth.json` - hand-read true value + tolerance per image.
 
 ## Not yet done
-- Auto skew estimate is fooled by strong periodic backgrounds (e.g. image2's perforated
-  panel, image1's carpet); currently the angle is set per-fixture. Restrict the estimate to
-  the scale columns once the scale is auto-located.
-- Rectification front-end (auto-detect + perspective-warp the scale) - deferred until the read
-  is trusted on more frames.
+- **Perspective warp**: deskew only removes rotation; the main pitch still drifts along the
+  scale (and image1's oblique shot compresses the vernier). `read.py` absorbs this with a
+  local pitch fit, but a true 4-point rectification would tighten the wide/oblique reads.
+- **Auto ROI**: the loose ROI is still supplied per fixture (the app gets it from the framing
+  quality-gate / Vision rectangle detection); full-frame scale detection is out of scope here.
 - OCR cross-check of the printed numbers (the coarse integer is anchored manually for now).
 - The iOS app (Stage 2).

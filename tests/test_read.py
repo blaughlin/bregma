@@ -1,4 +1,5 @@
-"""Validate each fixture's reading against its hand-read ground truth."""
+"""Validate each fixture's reading against its hand-read ground truth, via both
+the manual (hand-tuned crop) path and the auto-locate (loose ROI) front-end."""
 import json
 import sys
 from pathlib import Path
@@ -11,14 +12,15 @@ sys.path.insert(0, str(ROOT))
 from vernier.pipeline import read_fixture  # noqa: E402
 
 GROUND_TRUTH = json.loads((ROOT / "fixtures" / "ground_truth.json").read_text())
+CASES = [(k, mode) for k in sorted(GROUND_TRUTH) for mode in ("manual", "auto")]
 
 
-@pytest.mark.parametrize("key", sorted(GROUND_TRUTH))
-def test_reading_matches_ground_truth(key):
+@pytest.mark.parametrize("key,mode", CASES)
+def test_reading_matches_ground_truth(key, mode):
     truth = GROUND_TRUTH[key]
-    result, _ = read_fixture(key)
+    result, _ = read_fixture(key, auto=(mode == "auto"))
     err = abs(result["reading_mm"] - truth["value_mm"])
     assert err <= truth["tolerance_mm"], (
-        f"{key}: read {result['reading_mm']:.3f} mm vs truth "
+        f"{key} [{mode}]: read {result['reading_mm']:.3f} mm vs truth "
         f"{truth['value_mm']} mm (error {err:.3f} mm > {truth['tolerance_mm']})"
     )

@@ -12,7 +12,8 @@
     "vernier_prominence": 0.05,
     "vernier_ref": "bottom",
     "mm_per_div": 1.0,
-    "anchor": {"row": 578, "value_mm": 40.0}
+    "anchor": {"value_mm": 40.0},
+    "roi": [30, 965, 120, 320]
   },
   "image2": {
     "path": "SampleImages/image2.png",
@@ -28,7 +29,8 @@
     "vernier_prominence": 0.05,
     "vernier_ref": "bottom",
     "mm_per_div": 1.0,
-    "anchor": {"value_mm": 16.0}
+    "anchor": {"value_mm": 16.0},
+    "roi": [120, 1150, 200, 340]
   },
   "image1": {
     "path": "SampleImages/image1.jpeg",
@@ -44,6 +46,7 @@
     "vernier_prominence": 0.05,
     "vernier_ref": "bottom",
     "mm_per_div": 1.0,
-    "anchor": {"value_mm": 63.0}
+    "anchor": {"value_mm": 63.0},
+    "roi": [540, 1740, 490, 690]
   }
 }
