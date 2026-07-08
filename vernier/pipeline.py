@@ -8,12 +8,12 @@ from pathlib import Path
 
 import numpy as np
 
-from vernier import imaging, profile, ticks, read, locate
+from vernier import imaging, profile, ticks, read, locate, rectify
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def read_fixture(key, root=ROOT, verbose=False, auto=None):
+def read_fixture(key, root=ROOT, verbose=False, auto=None, rectify_override=None):
     """Run steps 1-5 on a named fixture. Returns (result, intermediates).
 
     When the fixture (or `auto=True`) requests it, the deskew angle and the
@@ -26,18 +26,27 @@ def read_fixture(key, root=ROOT, verbose=False, auto=None):
                              downscale=cfg.get("downscale", 1),
                              upscale=cfg.get("upscale", 1))
 
+    tform = None
     use_auto = cfg.get("auto", False) if auto is None else auto
     if use_auto:
         loc = locate.locate_scale(gray, roi=tuple(cfg["roi"]))
-        # detection spacing follows the detected pitch (below the true pitch)
-        loc["main_min_dist"] = max(3, int(0.55 * loc["main_pitch"]))
-        loc["vernier_min_dist"] = max(3, int(0.55 * loc["vernier_pitch"]))
-        cfg = {**cfg, **loc}          # detected geometry overrides hand values
+        gray = imaging.deskew(gray, loc["deskew_deg"])
+        geom = dict(loc)
+        geom["deskew_deg"] = 0.0                                   # already applied
+        geom["main_min_dist"] = max(3, int(0.55 * geom["main_pitch"]))
+        geom["vernier_min_dist"] = max(3, int(0.55 * geom["vernier_pitch"]))
+        cfg = {**cfg, **geom}
+        # Perspective rectification is available but OFF by default: measured
+        # across all fixtures it degrades accuracy (the read's local-pitch fit
+        # already handles perspective; a global homography only adds fit noise to
+        # a fundamentally local vernier comparison). Enable per-fixture to compare.
+        want_rectify = cfg.get("rectify", False) if rectify_override is None else rectify_override
+        if want_rectify:
+            tform, _ = rectify.build_homography(gray, geom["main_cols"], geom["rows"])
         if verbose:
-            print(f"[{key}] auto-located: deskew={loc['deskew_deg']:.2f} "
-                  f"main_cols={loc['main_cols']} vernier_cols={loc['vernier_cols']} "
-                  f"vernier_rows={loc['vernier_rows']} "
-                  f"min_dist m/v={loc['main_min_dist']}/{loc['vernier_min_dist']}")
+            print(f"[{key}] auto-located (deskew={loc['deskew_deg']:.2f}, "
+                  f"rectify={tform is not None}): main_cols={geom['main_cols']} "
+                  f"vernier_cols={geom['vernier_cols']} vernier_rows={geom['vernier_rows']}")
 
     angle = cfg["deskew_deg"]
     if angle is None:
@@ -55,6 +64,15 @@ def read_fixture(key, root=ROOT, verbose=False, auto=None):
                                      prominence=cfg.get("vernier_prominence", 0.03))
     main_abs = main_ticks + main_rows[0]
     vern_abs = vern_ticks + vern_rows[0]
+
+    # perspective rectification in coordinate space: map each band's sub-pixel
+    # tick rows through the homography at that band's centre column (no image
+    # resampling, so sub-pixel precision is preserved)
+    if tform is not None:
+        main_c = 0.5 * (cfg["main_cols"][0] + cfg["main_cols"][1])
+        vern_c = 0.5 * (cfg["vernier_cols"][0] + cfg["vernier_cols"][1])
+        main_abs = rectify.rectify_rows(tform, main_c, main_abs)
+        vern_abs = rectify.rectify_rows(tform, vern_c, vern_abs)
 
     result = read.read_scale(
         main_abs, vern_abs,

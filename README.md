@@ -35,6 +35,25 @@ front-end replaces the hand-tuned crop:
 Run it with `--auto`; the read then needs only the ROI, scale factor, `mm_per_div`, vernier
 reference end, and the coarse integer anchor.
 
+## Perspective rectification (`rectify.py`) — evaluated, off by default
+A homography built from the tick grid (send every main-tick line to a horizontal, equally-
+spaced target; apply it to the sub-pixel tick *coordinates*, not the pixels, to preserve
+precision) removes residual keystone and foreshortening after deskew. **Measured across all
+four fixtures it does not help** — it improves one and slightly degrades the other three:
+
+```
+fixture  truth   rectify off   rectify on
+image1   63.8    err 0.056     err 0.095
+image2   16.1    err 0.001     err 0.016
+image3   40.4    err 0.019     err 0.011
+image4   63.6    err 0.013     err 0.028
+```
+(reproduce with `python scripts/compare_rectify.py`.) The reason: the fine read is a *local*
+comparison (a vernier tick against its adjacent main ticks), and `read.py` already measures
+the main pitch locally where the vernier sits — so a global warp can't improve the local
+alignment and only injects its own fit error. Kept available (`"rectify": true` per fixture)
+but disabled by default. **Takeaway for the iOS port: skip perspective warp.**
+
 ## How it works (steps 1-5, per CLAUDE.md)
 1. **`imaging.py`** - load (optional up/downscale, EXIF-aware), deskew, and slice the
    main-scale and vernier tick columns into bands.
@@ -73,11 +92,8 @@ python -m venv .venv
 - `fixtures/ground_truth.json` - hand-read true value + tolerance per image.
 
 ## Not yet done
-- **Full perspective warp**: the iterative deskew removes rotation robustly, but the main
-  pitch still drifts along the scale (and image1's oblique shot compresses the vernier).
-  `read.py` absorbs this with a local pitch fit and all reads pass comfortably, but a true
-  4-point homography rectification would further tighten the wide/oblique cases.
 - **Auto ROI**: the loose ROI is still supplied per fixture (the app gets it from the framing
   quality-gate / Vision rectangle detection); full-frame scale detection is out of scope here.
+- Perspective rectification was implemented and evaluated (see above); not pursued further.
 - OCR cross-check of the printed numbers (the coarse integer is anchored manually for now).
 - The iOS app (Stage 2).

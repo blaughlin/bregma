@@ -173,12 +173,19 @@ def locate_scale(gray, roi=None, score_thresh=0.30, main_frac=0.6, verbose=False
 
     # final detection in the converged frame
     d = rotate(gray, angle, resize=False, mode="edge") if angle else gray
-    main_run, vern_run, cstart, cend, pitches = _detect_bands(d, roi, score_thresh, main_frac)
+    result = dict(deskew_deg=angle, **geometry(d, roi, score_thresh, main_frac))
+    if verbose:
+        print("locate:", result)
+    return result
 
+
+def geometry(d, roi, score_thresh=0.30, main_frac=0.6):
+    """Band geometry (columns, rows, pitch) from an already-deskewed image `d`.
+    Returned separately from deskew so it can be re-run after rectification."""
+    main_run, vern_run, cstart, cend, pitches = _detect_bands(d, roi, score_thresh, main_frac)
     mc = np.arange(*main_run)
     vc = np.arange(*vern_run)
-    result = dict(
-        deskew_deg=angle,
+    return dict(
         rows=[int(np.median(cstart[mc])), int(np.median(cend[mc]))],
         main_cols=[int(main_run[0]), int(main_run[1])],
         vernier_cols=[int(vern_run[0]), int(vern_run[1])],
@@ -186,6 +193,3 @@ def locate_scale(gray, roi=None, score_thresh=0.30, main_frac=0.6, verbose=False
         main_pitch=float(np.median(pitches[mc])),
         vernier_pitch=float(np.median(pitches[vc])),
     )
-    if verbose:
-        print("locate:", result)
-    return result
