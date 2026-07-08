@@ -17,7 +17,9 @@ def read_fixture(key, root=ROOT, verbose=False):
     """Run steps 1-5 on a named fixture. Returns (result, intermediates)."""
     cfg = json.loads((root / "fixtures" / "crops.json").read_text())[key]
 
-    gray = imaging.load_gray(root / cfg["path"], downscale=cfg.get("downscale", 1))
+    gray = imaging.load_gray(root / cfg["path"],
+                             downscale=cfg.get("downscale", 1),
+                             upscale=cfg.get("upscale", 1))
     angle = cfg["deskew_deg"]
     if angle is None:
         angle = imaging.estimate_skew(gray, rows=tuple(cfg["rows"]))

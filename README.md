@@ -8,13 +8,14 @@ the full design and the two-stage plan.
 **Not a diagnostic device - always verify against the physical scale.**
 
 ## Status
-Vertical scale (Kopf 957), two hand-read positions, both inside the 0.1 mm (one-vernier-
-division) gate:
+Vertical scale (Kopf 957), three hand-read positions across three very different captures,
+all inside the 0.1 mm (one-vernier-division) gate:
 
 | fixture | reads | hand-read | error | notes |
 |---------|-------|-----------|-------|-------|
 | `image3` | 40.421 mm | 40.4 mm | 0.021 mm | native resolution, fit RMS 0.53 px |
 | `image2` | 16.077 mm | 16.1 mm | 0.023 mm | 3024x4032 + perforated background, `downscale=3`, fit RMS 0.15 px |
+| `image1` | 63.759 mm | 63.8 mm | 0.041 mm | 640x480 low-res wide shot (EXIF-rotated), `upscale=3`, fit RMS 0.46 px |
 
 ## How it works (steps 1-5, per CLAUDE.md)
 1. **`imaging.py`** - load (optional downscale), deskew (small rotation that maximises
@@ -53,9 +54,9 @@ python -m venv .venv
 - `fixtures/ground_truth.json` - hand-read true value + tolerance per image.
 
 ## Not yet done
-- More fixtures / positions (`image1` is the remaining sample; add its hand-read value).
 - Auto skew estimate is fooled by strong periodic backgrounds (e.g. image2's perforated
-  panel); currently the angle is set per-fixture. Restrict the estimate to the scale columns.
+  panel, image1's carpet); currently the angle is set per-fixture. Restrict the estimate to
+  the scale columns once the scale is auto-located.
 - Rectification front-end (auto-detect + perspective-warp the scale) - deferred until the read
   is trusted on more frames.
 - OCR cross-check of the printed numbers (the coarse integer is anchored manually for now).

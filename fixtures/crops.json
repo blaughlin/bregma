@@ -29,5 +29,21 @@
     "vernier_ref": "bottom",
     "mm_per_div": 1.0,
     "anchor": {"value_mm": 16.0}
+  },
+  "image1": {
+    "path": "SampleImages/image1.jpeg",
+    "upscale": 3,
+    "deskew_deg": 3.25,
+    "rows": [540, 1740],
+    "vernier_rows": [735, 900],
+    "main_cols": [576, 618],
+    "vernier_cols": [530, 566],
+    "main_min_dist": 11,
+    "vernier_min_dist": 9,
+    "main_prominence": 0.05,
+    "vernier_prominence": 0.05,
+    "vernier_ref": "bottom",
+    "mm_per_div": 1.0,
+    "anchor": {"value_mm": 63.0}
   }
 }

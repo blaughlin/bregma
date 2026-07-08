@@ -8,5 +8,10 @@
     "value_mm": 16.1,
     "tolerance_mm": 0.1,
     "notes": "Hand-read by user 2026-07-08. High-res capture (3024x4032) with perforated-panel background; processed at downscale=3. Vernier 0 sits at ~16.1 mm (between the 10 mm and 20 mm numbered marks)."
+  },
+  "image1": {
+    "value_mm": 63.8,
+    "tolerance_mm": 0.1,
+    "notes": "Hand-read by user 2026-07-08. Low-res wide shot (640x480, EXIF-rotated); processed at upscale=3. Vernier 0 sits at ~63.8 mm (between the 60 mm and 70 mm numbered marks)."
   }
 }

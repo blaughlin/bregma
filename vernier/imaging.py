@@ -5,21 +5,22 @@ residual rotation still blunts the 1-D dips, so we estimate and remove it before
 collapsing to profiles.
 """
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageOps
 from skimage.transform import rotate
 
 
-def load_gray(path, downscale=1):
+def load_gray(path, downscale=1, upscale=1):
     """Load an image as a float grayscale array in [0, 1].
 
-    `downscale` (int > 1) shrinks the image by that factor with a high-quality
-    filter — useful for very high-res captures (the app downscales frames too).
-    All band coordinates in the fixture config are then in downscaled pixels.
+    `downscale` (int) shrinks a very high-res capture (the app downscales frames
+    too); `upscale` (int) enlarges a low-res one so tightly-packed ticks separate
+    for detection. All band coordinates in the fixture config are then in the
+    resized image's pixels. EXIF orientation is applied.
     """
-    img = Image.open(path).convert("L")
-    if downscale and downscale != 1:
+    img = ImageOps.exif_transpose(Image.open(path)).convert("L")
+    if downscale != 1 or upscale != 1:
         w, h = img.size
-        img = img.resize((w // downscale, h // downscale), Image.LANCZOS)
+        img = img.resize((w * upscale // downscale, h * upscale // downscale), Image.LANCZOS)
     return np.asarray(img).astype(float) / 255.0
 
 
