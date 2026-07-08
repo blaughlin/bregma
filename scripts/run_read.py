@@ -31,7 +31,8 @@ def run(key, save_debug=True, auto=None):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    auto = "--auto" in args
+    # --auto forces auto; otherwise honour each fixture's config (all auto now)
+    auto = True if "--auto" in args else None
     keys = [a for a in args if not a.startswith("--")] or ["image3"]
     for k in keys:
         run(k, auto=auto)

@@ -8,16 +8,15 @@ the full design and the two-stage plan.
 **Not a diagnostic device - always verify against the physical scale.**
 
 ## Status
-Vertical scale (Kopf 957), four hand-read positions across very different captures, all
-inside the 0.1 mm (one-vernier-division) gate. Two read paths are validated: **manual**
-(hand-tuned crop) and **auto** (deskew + bands detected from just a loose ROI).
+Vertical scale (Kopf 957), four hand-read positions across very different captures, all read
+(from just a loose ROI) inside the 0.1 mm (one-vernier-division) gate:
 
-| fixture | hand-read | manual | auto | notes |
-|---------|-----------|--------|------|-------|
-| `image3` | 40.4 mm | 40.421 mm | 40.381 mm | native resolution |
-| `image2` | 16.1 mm | 16.077 mm | 16.101 mm | 3024x4032 + perforated background, `downscale=3` |
-| `image1` | 63.8 mm | 63.759 mm | 63.856 mm | 640x480 low-res wide shot (EXIF-rotated), `upscale=3` |
-| `image4` | 63.6 mm | -         | 63.587 mm | 640x480 low-res wide shot, auto-located only, `upscale=3` |
+| fixture | hand-read | reading | error | notes |
+|---------|-----------|---------|-------|-------|
+| `image3` | 40.4 mm | 40.381 mm | 0.019 mm | native resolution |
+| `image2` | 16.1 mm | 16.101 mm | 0.001 mm | 3024x4032 + perforated background, `downscale=3` |
+| `image1` | 63.8 mm | 63.856 mm | 0.056 mm | 640x480 low-res wide shot (EXIF-rotated), `upscale=3` |
+| `image4` | 63.6 mm | 63.587 mm | 0.013 mm | 640x480 low-res wide shot, `upscale=3` |
 
 ## Front-end: auto-location (`locate.py`)
 Given a **loose ROI** around the scale (what the app's framing quality-gate will provide), the
@@ -80,15 +79,16 @@ python -m venv .venv
 
 ## Run
 ```bash
-.venv/Scripts/python scripts/run_read.py image3 image2 image1   # manual crop
-.venv/Scripts/python scripts/run_read.py --auto image3 image2 image1   # auto-locate from ROI
-.venv/Scripts/python -m pytest tests/                    # validate both paths vs ground truth
+.venv/Scripts/python scripts/run_read.py image3 image2 image1 image4   # read + debug PNGs
+.venv/Scripts/python -m pytest tests/                    # validate vs ground truth
+.venv/Scripts/python scripts/compare_rectify.py          # perspective-rectify off vs on
 ```
 
 ## Fixtures
 - `SampleImages/` - source photos.
-- `fixtures/crops.json` - per-image scale factor, loose `roi`, the coarse anchor value, plus
-  the hand-tuned deskew/bands used by the manual path (the auto path overrides these).
+- `fixtures/crops.json` - per-image scale factor, loose `roi`, and the coarse anchor value.
+  Everything else (deskew, bands, tick pitch) is auto-detected. A hand-tuned crop can still be
+  supplied instead (set `"auto": false` with explicit `deskew_deg`/`main_cols`/... fields).
 - `fixtures/ground_truth.json` - hand-read true value + tolerance per image.
 
 ## Not yet done

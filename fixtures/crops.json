@@ -1,61 +1,29 @@
 {
   "image3": {
     "path": "SampleImages/image3.png",
-    "deskew_deg": -1.25,
-    "rows": [30, 965],
-    "vernier_rows": [335, 585],
-    "main_cols": [213, 244],
-    "vernier_cols": [140, 200],
-    "main_min_dist": 15,
-    "vernier_min_dist": 15,
-    "main_prominence": 0.05,
-    "vernier_prominence": 0.05,
-    "vernier_ref": "bottom",
-    "mm_per_div": 1.0,
-    "anchor": {"value_mm": 40.0},
-    "roi": [30, 965, 120, 320]
+    "auto": true,
+    "roi": [30, 965, 120, 320],
+    "anchor": {"value_mm": 40.0}
   },
   "image2": {
     "path": "SampleImages/image2.png",
+    "auto": true,
     "downscale": 3,
-    "deskew_deg": 1.5,
-    "rows": [120, 1150],
-    "vernier_rows": [700, 920],
-    "main_cols": [268, 316],
-    "vernier_cols": [224, 266],
-    "main_min_dist": 11,
-    "vernier_min_dist": 11,
-    "main_prominence": 0.05,
-    "vernier_prominence": 0.05,
-    "vernier_ref": "bottom",
-    "mm_per_div": 1.0,
-    "anchor": {"value_mm": 16.0},
-    "roi": [120, 1150, 200, 340]
+    "roi": [120, 1150, 200, 340],
+    "anchor": {"value_mm": 16.0}
   },
   "image1": {
     "path": "SampleImages/image1.jpeg",
+    "auto": true,
     "upscale": 3,
-    "deskew_deg": 3.25,
-    "rows": [540, 1740],
-    "vernier_rows": [735, 900],
-    "main_cols": [576, 618],
-    "vernier_cols": [530, 566],
-    "main_min_dist": 11,
-    "vernier_min_dist": 9,
-    "main_prominence": 0.05,
-    "vernier_prominence": 0.05,
-    "vernier_ref": "bottom",
-    "mm_per_div": 1.0,
-    "anchor": {"value_mm": 63.0},
-    "roi": [540, 1740, 490, 690]
+    "roi": [540, 1740, 490, 690],
+    "anchor": {"value_mm": 63.0}
   },
   "image4": {
     "path": "SampleImages/image4.jpeg",
-    "upscale": 3,
     "auto": true,
+    "upscale": 3,
     "roi": [450, 1500, 470, 740],
-    "vernier_ref": "bottom",
-    "mm_per_div": 1.0,
     "anchor": {"value_mm": 63.0}
   }
 }
