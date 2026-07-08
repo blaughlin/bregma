@@ -1,0 +1,33 @@
+{
+  "image3": {
+    "path": "SampleImages/image3.png",
+    "deskew_deg": -1.25,
+    "rows": [30, 965],
+    "vernier_rows": [335, 585],
+    "main_cols": [213, 244],
+    "vernier_cols": [140, 200],
+    "main_min_dist": 15,
+    "vernier_min_dist": 15,
+    "main_prominence": 0.05,
+    "vernier_prominence": 0.05,
+    "vernier_ref": "bottom",
+    "mm_per_div": 1.0,
+    "anchor": {"row": 578, "value_mm": 40.0}
+  },
+  "image2": {
+    "path": "SampleImages/image2.png",
+    "downscale": 3,
+    "deskew_deg": 1.5,
+    "rows": [120, 1150],
+    "vernier_rows": [700, 920],
+    "main_cols": [268, 316],
+    "vernier_cols": [224, 266],
+    "main_min_dist": 11,
+    "vernier_min_dist": 11,
+    "main_prominence": 0.05,
+    "vernier_prominence": 0.05,
+    "vernier_ref": "bottom",
+    "mm_per_div": 1.0,
+    "anchor": {"value_mm": 16.0}
+  }
+}
